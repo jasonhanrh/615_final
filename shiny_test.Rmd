@@ -118,9 +118,9 @@ Start exploring now to uncover the beauty and insights of Aruba!",
                                  h2("About Aruba"),
                                  p("Aruba is a small Caribbean island, located about 29 kilometers (18 miles) north of Venezuela. Known for its white-sand beaches and clear turquoise waters, Aruba is a major tourist destination. The capital city, Oranjestad, is home to colorful Dutch colonial architecture, a reflection of Aruba's historical ties with the Netherlands.",
                                    style = "font-size: 16px; line-height: 1.8;"),
-                                 tags$img(src = "https://cdn.pixabay.com/photo/2017/07/10/14/57/aruba-flag-2497240_960_720.png", 
-                                          alt = "Aruba Flag", 
-                                          style = "width:100%; margin-top: 10px;")
+                                 tags$img(src = "C:\\Users\\12718\\OneDrive\\桌面\\aruba_shiny\\615_final\\www\\clipboard-1936290055.png", 
+         alt = "Aruba ", 
+         style = "width:100%; margin-top: 10px;")
                           ),
                           column(6,
                                  h2("Geographical and Historical Background"),
