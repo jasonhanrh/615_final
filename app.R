@@ -1,0 +1,634 @@
+library(shiny)
+library(leaflet)
+library(ggplot2)
+library(shinydashboard)
+library(shinythemes)
+library(wbstats)
+library(dplyr)
+library(tidyr)
+library(base64enc)
+library(png)
+library(magick)
+
+# Load necessary data
+indicators <- c("NY.GDP.MKTP.CD", "NY.GDP.PCAP.CD", "NY.GDP.MKTP.KD.ZG", "FP.CPI.TOTL.ZG", "SP.DYN.LE00.IN", "SP.POP.TOTL", "SP.POP.GROW")
+
+aruba_data <- wb_data(indicator = indicators, country = "ABW", start_date = 1990, end_date = 2022) %>% 
+  mutate(date = as.numeric(date))
+
+
+
+# Custom CSS for Styling
+custom_css <- HTML("
+  .navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: white !important;
+  }
+  .nav-tabs > li > a {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .nav-tabs > li.active > a {
+    background-color: #337ab7 !important;
+    color: white !important;
+  }
+  .nav-tabs > li > a:hover,
+  .nav-tabs > li > a:focus,
+  .dropdown-menu {
+    background-color: black !important;
+    color: white !important;
+  }
+  .dropdown-menu > li > a {
+    color: white !important;
+  }
+  .dropdown-menu > li > a:hover,
+  .dropdown-menu > li > a:focus {
+    background-color: #444 !important;
+    color: #ddd !important;
+  }
+  body {
+    font-family: 'Futura', sans-serif;
+  }
+  .well {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef;
+  }
+  .panel {
+    border: 1px solid #d6d8db !important;
+  }
+")
+
+ui <- fluidPage(
+  theme = shinytheme("cosmo"),
+  tags$head(
+    tags$style(HTML("
+      body {
+        background-image: url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdm5kaXoxODkzNWt6eXN1eG85aGNkN3I3emJtZnJ3Yzk3bTlqanl0dSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/by7uJ8IGaeDmw/giphy.gif');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
+      }
+      .navbar {
+        background-color: rgba(0, 0, 0, 0.7) !important;
+      }
+      .navbar-brand {
+        font-size: 24px;
+        font-weight: bold;
+        color: white !important;
+      }
+      .nav-tabs > li > a {
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .nav-tabs > li.active > a {
+        background-color: #337ab7 !important;
+        color: white !important;
+      }
+      .well {
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        color: black;
+      }
+      .panel {
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        color: black;
+      }
+    "))
+  ),
+  navbarPage(
+    title = div(icon("globe"), "HEY ARUBA !"),
+    tabPanel("WELCOME",
+             fluidRow(
+               column(12, align = "center",
+                      h1("Aruba Explorer", style = "font-size: 60px; font-weight: bold;"),
+                      p("by Ruihang (Jason) Han", style = "font-size: 30px; font-weight: bold;"),
+                      p("Discover the vibrant story of Aruba through interactive visualizations and insights. This platform brings together comprehensive data on Aruba’s geography, economy, and demographics to help you explore the island’s unique characteristics and trends.
+
+Whether you're interested in understanding Aruba’s economic growth, population dynamics, or geographic features, Aruba Explorer provides an intuitive and informative experience. Navigate through maps, charts, and curated content to uncover what makes this island nation extraordinary.
+
+Start exploring now to uncover the beauty and insights of Aruba!",
+                        style = "font-size: 20px; line-height: 2.5;")
+               )
+             )
+    ),
+    
+    navbarMenu("INFORMATION",
+               tabPanel("About Aruba",
+                        fluidRow(
+                          column(12,
+                                 h2("About Aruba"),
+                                 p("Aruba, a jewel of the Caribbean, is a small but enchanting island located just 29 kilometers (18 miles) north of Venezuela. Renowned for its pristine white-sand beaches and crystal-clear turquoise waters, it is no surprise that Aruba has become a premier destination for travelers seeking sun-soaked relaxation and adventure. The island enjoys a reputation as a haven of tranquility and beauty, offering an idyllic escape from the bustle of everyday life.",
+                                   style = "font-size: 20px; line-height: 1.8;"),
+                                 plotOutput("p_1",height = "500px"),
+                                 
+                                 
+                                 p("The capital city, Oranjestad, is a vibrant and colorful hub that reflects Aruba's rich cultural heritage. Its charming streets are lined with Dutch colonial architecture, a nod to the island’s historical ties with the Netherlands. These iconic buildings, painted in pastel hues of pink, yellow, and blue, stand as a testament to Aruba’s unique blend of European influence and Caribbean spirit. Beyond its visual appeal, Oranjestad offers a lively atmosphere, bustling with boutique shops, local markets, and waterfront restaurants serving both international cuisine and Aruban delicacies.",
+                                   style = "font-size: 20px; line-height: 1.8;"),
+                                 
+                                 
+                                 p("Aruba’s natural beauty extends far beyond its beaches. The island’s arid, desert-like terrain is dotted with cacti, diverse flora, and dramatic rock formations, offering a stark contrast to its coastal splendor. Arikok National Park, which covers nearly 20% of the island, showcases this rugged beauty, with hiking trails leading to ancient cave drawings, hidden beaches, and panoramic views of the Caribbean Sea. For adventure enthusiasts, exploring the park by foot or off-road vehicle provides a glimpse into Aruba's wilder, untouched landscapes.",
+                                   style = "font-size: 20px; line-height: 1.8;"),
+                                 
+                                 
+                                 p("What sets Aruba apart from many other tropical destinations is its remarkable climate. The island lies outside the hurricane belt and enjoys nearly constant sunshine, with warm temperatures and refreshing trade winds that keep the weather comfortable year-round. This unique geography has earned Aruba the nickname: One Happy Island, reflecting not only its weather but also the warmth and hospitality of its people.",
+                                   style = "font-size: 20px; line-height: 1.8;"),
+                                 
+                                 
+                                 p("Underneath its turquoise waves lies a vibrant marine ecosystem. Aruba is a paradise for snorkelers and scuba divers, with coral reefs teeming with colorful fish, sea turtles, and even historic shipwrecks, such as the famous Antilla. These underwater treasures make the island a magnet for nature lovers and water sports enthusiasts alike.",
+                                   style = "font-size: 20px; line-height: 1.8;"),
+                                 
+                                 
+                                 p("Culturally, Aruba thrives as a melting pot of influences. Its festivals, food, music, and traditions highlight the blend of Caribbean, Dutch, and Latin American heritage that defines the island. Whether you’re exploring its historical sites, indulging in its culinary delights, or simply soaking in the warmth of its sun and people, Aruba offers a truly unforgettable experience—a harmonious balance of relaxation, adventure, and cultural immersion.",
+                                   style = "font-size: 20px; line-height: 1.8;")
+                                 
+                                 
+                          )
+                        ),
+                        fluidRow(
+                          column(12,
+                                 h2("Geographical and Historical Background"),
+                                 p("Aruba is a constituent country within the Kingdom of the Netherlands, boasting a population of approximately 100,000 residents. Despite its small size, the island holds immense historical and cultural significance. Known for its unique, arid climate, Aruba's landscape is adorned with cacti-studded terrains, rugged cliffs, and steady trade winds that provide a natural cooling effect year-round.",
+                                   style = "font-size: 20px; line-height: 1.8;"), 
+                                 plotOutput("p_2"),
+                                 
+                                 p("Aruba's history is deeply rooted in its early settlement by the Arawak Indigenous peoples, who left behind a legacy visible in ancient cave paintings and archaeological artifacts scattered across the island. Later, it became a crossroads for European colonial powers, beginning with the Spanish in the late 15th century and later the Dutch in the 17th century. These colonial influences have left a lasting imprint on the island’s architecture, language, and traditions.",
+                                   style = "font-size: 20px; line-height: 1.8;"),
+                                 
+                                 p("Today, Aruba is celebrated for its cultural diversity and thriving tourism industry. As a melting pot of Caribbean, Dutch, and Latin influences, the island offers visitors a unique blend of heritage, natural beauty, and modern attractions. Whether exploring its historical landmarks or enjoying its world-renowned hospitality, Aruba stands as a shining example of how tradition and modernity can coexist harmoniously.",
+                                   style = "font-size: 20px; line-height: 1.8;")
+                                 
+                          )
+                        )
+               ),
+               
+               tabPanel("Culture and Traditions",
+                        fluidRow(
+                          column(12,
+                                 h2("Culture and Traditions"),
+                                 
+                                 # First Paragraph
+                                 p("Aruba's culture is a vibrant tapestry woven from Caribbean, Dutch, and Latin influences, creating a unique identity that reflects the island’s rich history and diverse population. The island comes alive with colorful festivals, the most notable being Carnival, a spectacular celebration filled with vibrant costumes, rhythmic music, electrifying dancing, and joyous parades. This annual event is a testament to Aruba's lively spirit and its people’s love for celebration.",
+                                   style = "font-size: 20px; line-height: 1.8;fond-weight:bold"),
+                                 
+                                 # Insert first image
+                                 plotOutput("p_3"),
+                                 
+                                 # Second Paragraph
+                                 p("Aruba's culinary traditions also play a significant role in its cultural heritage. Local dishes showcase the island’s blend of flavors and influences. Pastechi, a popular pastry filled with cheese, meat, or fish, is a must-try treat for visitors. The island's proximity to the ocean ensures a variety of fresh seafood dishes, including keshi yena (stuffed cheese) and grilled fish, both staples of Aruban cuisine. Tropical fruits like papaya and tamarind are also widely enjoyed and used in beverages and desserts.",
+                                   style = "font-size: 20px; line-height: 1.8;fond-weight:bold"),
+                                 
+                                 # Insert second image
+                                 plotOutput("p_4"),
+                                 
+                                 # Third Paragraph
+                                 p("Music and dance are at the heart of Aruban culture, with styles such as calypso, tumba, and soca bringing people together in celebration and daily life. These rhythms, accompanied by steel drums and traditional instruments, narrate the stories and history of the island's people. Traditional dances like the waltz, polka, and danza reveal Aruba's deep-rooted ties to its Dutch and Caribbean heritage.",
+                                   style = "font-size: 20px; line-height: 1.8;fond-weight:bold"),
+                                 
+                                 # Insert third image
+                                 plotOutput("p_5"),
+                                 
+                                 # Fourth Paragraph
+                                 p("The island’s traditions are further reflected in its crafts and art. Handmade dande music instruments, vibrant paintings, and woven baskets demonstrate the creativity and skill of local artisans. Festivals, food, music, and art come together to create an atmosphere that is as warm and welcoming as the Aruban people themselves. Visitors often find that experiencing Aruba’s culture is as unforgettable as its stunning beaches and landscapes.",
+                                   style = "font-size: 20px; line-height: 1.8;fond-weight:bold"),
+                                 
+                                 # Insert fourth image
+                                 plotOutput("p_6")
+                          )
+                        )
+               )
+               
+    ),
+    
+    navbarMenu("GEOGRAPHY",
+               tabPanel("Standard Map",
+                        leafletOutput("standard_map", height = "600px")
+               ),
+               tabPanel("Satellite Map",
+                        leafletOutput("satellite_map", height = "600px")
+               )
+    ),
+    navbarMenu("GENERAL DATA",
+               tabPanel("Economic Insights",
+                        fluidRow(
+                          column(4, wellPanel(
+                            selectInput(
+                              "economic_visualization",
+                              "Choose a Visualization:",
+                              choices = list(
+                                "GDP and Growth Rate" = "gdp_growth",
+                                "Inflation Trends" = "inflation"
+                              )
+                            ),
+                            conditionalPanel(
+                              condition = "input.economic_visualization === 'gdp_growth'",
+                              checkboxInput("showGrowthRate", "Show GDP Growth Rate", TRUE),
+                              sliderInput("gdp_range", "Select Year Range:",
+                                          min = 1990, max = 2022, value = c(1990, 2022), step = 1, sep = "")
+                            ),
+                            conditionalPanel(
+                              condition = "input.economic_visualization === 'inflation'",
+                              sliderInput("inflation_range", "Select Year Range:",
+                                          min = 1990, max = 2022, value = c(1990, 2022), step = 1, sep = "")
+                            )
+                          )),
+                          column(8, plotOutput("economicPlot", height = "400px"))
+                        )
+               ),
+               tabPanel("Demographics",
+                        fluidRow(
+                          column(4, wellPanel(
+                            selectInput(
+                              "demographic_visualization",
+                              "Choose a Visualization:",
+                              choices = list(
+                                "Population and Growth" = "population_growth",
+                                "Life Expectancy" = "life_expectancy"
+                              )
+                            ),
+                            conditionalPanel(
+                              condition = "input.demographic_visualization === 'population_growth'",
+                              checkboxInput("showPopulationGrowth", "Show Population Growth Rate", TRUE),
+                              sliderInput("pop_range", "Select Year Range:",
+                                          min = 1990, max = 2022, value = c(1990, 2022), step = 1, sep = "")
+                            ),
+                            conditionalPanel(
+                              condition = "input.demographic_visualization === 'life_expectancy'",
+                              sliderInput("life_expectancy_range", "Select Year Range:",
+                                          min = 1990, max = 2022, value = c(1990, 2022), step = 1, sep = "")
+                            )
+                          )),
+                          column(8, plotOutput("demographicPlot", height = "400px"))
+                        )
+               )
+    ),
+    
+    navbarMenu("SITUATION ANALYSIS",
+               tabPanel('Introduction & SWOT',
+                        fluidRow(
+                          column(12, 
+                                 # Introduction 
+                                 h2("Introduction", style = "font-size: 28px; font-weight: bold; text-align: center;"),
+                                 p("Understanding the socio-economic dynamics of small island nations is essential for recognizing their unique challenges and untapped opportunities. 
+         This section offers a comprehensive comparative analysis of key indicators for Aruba, Bahamas, and Barbados, shedding light on their differences 
+         in economic performance, demographic shifts, and social development.", 
+                                   style = "font-size: 20px; line-height: 1.8; font-weight: bold;"),
+                                 
+                                 p("By examining critical factors such as GDP, population growth, life expectancy, and inflation, this analysis aims to uncover distinct patterns that shape 
+         the socio-economic landscape of these nations. Highlighting these disparities not only reveals the diverse trajectories of economic and social progress 
+         within the Caribbean region but also provides valuable insights for policymakers, researchers, and development practitioners working to foster sustainable 
+         growth in small island economies.", 
+                                   style = "font-size: 20px; line-height: 1.8; font-weight: bold;"),
+                                 
+                                 hr(style = "border-top: 2px solid #bbb; margin-top: 30px; margin-bottom: 30px;"),
+                                 
+                                 # SWOT
+                                 h2("SWOT Analysis for Aruba", style = "font-size: 28px; font-weight: bold; text-align: center;"),
+                                 
+                                 # Strengths
+                                 h3("Strengths", style = "font-size: 24px; font-weight: bold;"),
+                                 tags$ul(
+                                   tags$li("**Strategic Geographic Location**: Positioned at the crossroads of the Caribbean and South America, Aruba benefits from its proximity to major markets and trade routes.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Strong Tourism Industry**: Renowned for its white sandy beaches, sunny climate, and vibrant cultural heritage, Aruba attracts millions of international tourists annually, significantly boosting its GDP.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Political Stability**: As a constituent country of the Kingdom of the Netherlands, Aruba enjoys a stable political environment and access to Dutch legal and administrative support.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**High Human Development Index (HDI)**: Aruba boasts strong healthcare, education, and infrastructure systems, contributing to its high life expectancy and quality of life.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Cultural Diversity**: A multicultural population blending Amerindian, African, and European influences fosters social cohesion and global cultural appeal.", 
+                                           style = "font-size: 18px; line-height: 1.8;")
+                                 ),
+                                 
+                                 # Weaknesses
+                                 h3("Weaknesses", style = "font-size: 24px; font-weight: bold;"),
+                                 tags$ul(
+                                   tags$li("**Economic Dependence on Tourism**: Over-reliance on tourism makes Aruba vulnerable to global economic shocks, natural disasters, and pandemics, as evidenced during COVID-19.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Limited Natural Resources**: The island’s arid climate and small land area limit agricultural production and industrial diversification.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Environmental Vulnerability**: Rising sea levels and extreme weather events pose significant risks to Aruba’s coastal infrastructure and ecosystems.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Small Population and Market Size**: A limited population restricts the domestic market potential, increasing dependence on imports and external markets.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Relatively Low GDP Growth**: While stable, Aruba’s GDP growth rate has lagged behind regional peers like the Bahamas, indicating limited economic dynamism.", 
+                                           style = "font-size: 18px; line-height: 1.8;")
+                                 ),
+                                 
+                                 # Opportunities
+                                 h3("Opportunities", style = "font-size: 24px; font-weight: bold;"),
+                                 tags$ul(
+                                   tags$li("**Renewable Energy Development**: Aruba’s sunny and windy climate presents excellent potential for expanding solar and wind energy production, reducing dependency on imported fuels.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Economic Diversification**: Opportunities exist to expand industries like financial services, technology, and healthcare tourism to reduce reliance on tourism.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Regional Collaboration**: Strengthening trade and policy collaborations with Caribbean nations could boost economic resilience and shared resource management.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Sustainable Tourism Initiatives**: Emphasizing eco-tourism and sustainable practices can attract environmentally conscious travelers while preserving natural resources.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Digital Transformation**: Leveraging digital technologies to enhance governance, education, and business operations can position Aruba as a tech-forward nation.", 
+                                           style = "font-size: 18px; line-height: 1.8;")
+                                 ),
+                                 
+                                 
+                                 h3("Threats", style = "font-size: 24px; font-weight: bold;"),
+                                 tags$ul(
+                                   tags$li("**Climate Change**: Rising temperatures, more frequent hurricanes, and coastal erosion threaten Aruba’s tourism-dependent economy and natural habitats.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Global Economic Instability**: Economic downturns in major tourist source markets, such as the United States and Europe, could significantly impact visitor arrivals and revenue.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Competition from Regional Destinations**: Other Caribbean nations, like the Bahamas and Barbados, offer similar attractions, creating fierce competition for tourists and investments.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Aging Population**: An aging population could strain healthcare systems and social services while reducing the labor force.", 
+                                           style = "font-size: 18px; line-height: 1.8;"),
+                                   tags$li("**Geopolitical Risks**: Political or economic instability in neighboring regions, such as Venezuela, could spill over and disrupt Aruba’s economy and security.", 
+                                           style = "font-size: 18px; line-height: 1.8;")
+                                 )
+                          )
+                        )
+               )
+               ,
+               
+               tabPanel("GDP Per Capita", plotOutput("c1")),
+               tabPanel("Life Expectancy", plotOutput("c2")),
+               tabPanel("Population Total", plotOutput("c3"))
+    ),
+    
+    
+    
+    
+    navbarMenu(
+      title = "REFERENCES",
+      
+      # Add custom CSS to make website links white (only <a> links, not other text)
+      tags$head(
+        tags$style(HTML("
+      .tab-content a {
+        color: white !important; /* Change only website link color to white */
+      }
+    "))
+      ),
+      
+      # General References Tab
+      tabPanel(
+        title = "General References",
+        fluidPage(
+          h2("General References"), 
+          tags$ul(
+            tags$li(a("Wikipedia - Aruba", href = "https://en.wikipedia.org/wiki/Aruba", target = "_blank")),
+            tags$li(a("Wikipedia - Geography of Aruba", href = "https://en.wikipedia.org/wiki/Geography_of_Aruba", target = "_blank")),
+            tags$li(a("Wikipedia - Politics of Aruba", href = "https://en.wikipedia.org/wiki/Politics_of_Aruba", target = "_blank")),
+            tags$li(a("Wikipedia - Economy of Aruba", href = "https://en.wikipedia.org/wiki/Economy_of_Aruba", target = "_blank"))
+          )
+        )
+      ),
+      
+      # Data Sources Tab
+      tabPanel(
+        title = "Data Sources",
+        fluidPage(
+          h2("Data Sources"),
+          tags$ul(
+            tags$li(a("UNData", href = "https://data.un.org/", target = "_blank")),
+            tags$li(a("World Bank Open Data - Aruba", href = "https://data.worldbank.org/country/aruba", target = "_blank")),
+            
+            tags$li(a("US Department of State - 2021 Investment Climate Statements: Aruba", 
+                      href = "https://www.state.gov/reports/2021-investment-climate-statements/aruba/", target = "_blank"))
+          )
+        )
+      ),
+      
+      # R Resources Tab
+      tabPanel(
+        title = "R Resources",
+        fluidPage(
+          h2("R Resources"),
+          tags$ul(
+            tags$li(a("R for Data Science (2e)", href = "https://r4ds.hadley.nz", target = "_blank")),
+            tags$li(a("Mastering Shiny", href = "https://mastering-shiny.org/index.html", target = "_blank")),
+            tags$li(a("How to Publish Shiny", href = "https://shiny.posit.co/r/getstarted/shiny-basics/lesson7/", target = "_blank"))
+          )
+        )
+      )
+    )
+    
+    
+    
+  )
+)
+
+
+server <- function(input, output, session) {
+  # Standard Map
+  
+  output$p_1 <- renderPlot({
+    
+    img <- readPNG("www/clipboard-1936290055.png")
+    
+    
+    par(mar = c(0, 0, 0, 0))
+    plot(1:2, type = "n", xlab = "", ylab = "", axes = FALSE) 
+    rasterImage(img, 1, 1, 2, 2) 
+  })
+  
+  output$p_2 <- renderPlot({
+    
+    img <- readPNG("www/clipboard-1863679815.png")
+    
+    
+    par(mar = c(0, 0, 0, 0))
+    plot(1:2, type = "n", xlab = "", ylab = "", axes = FALSE) 
+    rasterImage(img, 1, 1, 2, 2) 
+  })
+  
+  
+  output$p_3<- renderPlot({
+    
+    img <- image_read("www/carnival_A.jpg")
+    
+    
+    par(mar = c(0, 0, 0, 0))
+    plot(1:2, type = "n", xlab = "", ylab = "", axes = FALSE) 
+    rasterImage(img, 1, 1, 2, 2) 
+  })
+  
+  output$p_4 <- renderPlot({
+    
+    img <- image_read("www/FOOD_A.jpg")
+    
+    
+    par(mar = c(0, 0, 0, 0))
+    plot(1:2, type = "n", xlab = "", ylab = "", axes = FALSE) 
+    rasterImage(img, 1, 1, 2, 2) 
+  })
+  
+  output$p_5 <- renderPlot({
+    
+    img <- image_read("www/music.jpg")
+    
+    
+    par(mar = c(0, 0, 0, 0))
+    plot(1:2, type = "n", xlab = "", ylab = "", axes = FALSE) 
+    rasterImage(img, 1, 1, 2, 2) 
+  })
+  
+  output$p_6<- renderPlot({
+    
+    img <- image_read("www/art_A.jpg")
+    
+    
+    par(mar = c(0, 0, 0, 0))
+    plot(1:2, type = "n", xlab = "", ylab = "", axes = FALSE) 
+    rasterImage(img, 1, 1, 2, 2) 
+  })
+  output$standard_map <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = -70.009354, lat = 12.510052, zoom = 10) %>%
+      addProviderTiles(providers$OpenStreetMap) %>%
+      addMarkers(
+        lng = c(-70.009354, -69.9181, -70.0457),
+        lat = c(12.510052, 12.4404, 12.5647),
+        popup = c("Oranjestad (Capital)", "San Nicolas", "Palm Beach")
+      )
+  })
+  
+  # Satellite Map
+  output$satellite_map <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = -70.009354, lat = 12.510052, zoom = 10) %>%
+      addProviderTiles(providers$Esri.WorldImagery) %>%
+      addMarkers(
+        lng = c(-70.009354, -69.9181, -70.0457),
+        lat = c(12.510052, 12.4404, 12.5647),
+        popup = c("Oranjestad (Capital)", "San Nicolas", "Palm Beach")
+      )
+  })
+  
+  # Economic Plot
+  output$economicPlot <- renderPlot({
+    range <- if (input$economic_visualization == "gdp_growth") input$gdp_range else input$inflation_range
+    filtered_data <- aruba_data %>% filter(date >= range[1], date <= range[2])
+    
+    if (input$economic_visualization == "gdp_growth") {
+      plot <- ggplot(filtered_data, aes(x = date)) +
+        geom_col(aes(y = NY.GDP.MKTP.CD / 10^6, fill = NY.GDP.MKTP.CD), color = "black") +
+        scale_fill_gradientn(colors = c("#023E8A", "#0077B6", "#00B4D8", "#90E0EF", "#ADE8F4")) +
+        labs(title = "Aruba GDP and Growth Rate", x = "Year", y = "GDP (Million USD)") +
+        theme_minimal()
+      
+      if (input$showGrowthRate) {
+        plot <- plot + 
+          geom_line(aes(y = NY.GDP.MKTP.KD.ZG * 100), color = "red", size = 1.5, linetype = "dashed") +
+          scale_y_continuous(sec.axis = sec_axis(~./100, name = "GDP Growth Rate (%)"))
+      }
+    } else if (input$economic_visualization == "inflation") {
+      plot <- ggplot(filtered_data, aes(x = date)) +
+        geom_line(aes(y = FP.CPI.TOTL.ZG), color = "red", size = 1.5) +
+        geom_line(aes(y = NY.GDP.MKTP.KD.ZG), color = "blue", size = 1.5, linetype = "dashed") +
+        labs(title = "Inflation Rate and GDP Growth Rate", x = "Year", y = "Rate (%)") +
+        theme_minimal()
+    }
+    plot
+  })
+  
+  # Demographic Plot
+  output$demographicPlot <- renderPlot({
+    range <- if (input$demographic_visualization == "population_growth") input$pop_range else input$life_expectancy_range
+    filtered_data <- aruba_data %>% filter(date >= range[1], date <= range[2])
+    
+    if (input$demographic_visualization == "population_growth") {
+      plot <- ggplot(filtered_data, aes(x = date, y = SP.POP.TOTL / 10^3)) +
+        geom_col(aes(fill = SP.POP.TOTL), color = "black") +
+        scale_fill_gradientn(colors = c("#023E8A", "#0096C7", "#00B4D8", "#48CAE4", "#ADE8F4")) +
+        labs(title = "Population and Growth Rate", x = "Year", y = "Population (Thousands)") +
+        theme_minimal()
+      
+      if (input$showPopulationGrowth) {
+        plot <- plot + geom_line(aes(y = SP.POP.GROW * 10 + 300), color = "green", size = 1)
+      }
+    } else if (input$demographic_visualization == "life_expectancy") {
+      plot <- ggplot(filtered_data, aes(x = date, y = SP.DYN.LE00.IN)) +
+        geom_line(color = "blue", size = 1.5) +
+        labs(title = "Life Expectancy", x = "Year", y = "Life Expectancy (Years)") +
+        theme_minimal()
+    }
+    plot
+  })
+  
+  
+  countries <- c("ABW", "BHS", "BRB")  # Aruba, Bahamas, Barbados, Curacao
+  
+  
+  comparison_data <- wb_data(indicator = indicators, country = countries, start_date = 1990, end_date = 2022)
+  
+  library(dplyr)
+  library(tidyr)
+  comparison_data_clean <- comparison_data %>%
+    pivot_longer(cols = starts_with("SP.") | starts_with("NY.") | starts_with("FP."),
+                 names_to = "Indicator", values_to = "Value")
+  
+  
+  
+  
+  output$c1 <- renderPlot({
+    
+    gdp_per_capita_data <- comparison_data_clean %>% 
+      filter(Indicator == "NY.GDP.PCAP.CD")
+    
+    ggplot(gdp_per_capita_data, aes(x = date, y = Value, color = country)) +
+      geom_line(size = 1.2) +  
+      geom_point(size = 2) +   
+      labs(
+        title = "GDP Per Capita Comparison (1990-2022)",
+        x = "Year",
+        y = "GDP Per Capita (current US$)"
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+  })
+  
+  output$c2 <- renderPlot({
+    
+    life_expectancy_data <- comparison_data_clean %>% 
+      filter(Indicator == "SP.DYN.LE00.IN")
+    
+    ggplot(life_expectancy_data, aes(x = date, y = Value, color = country)) +
+      geom_line(size = 1.2) +  
+      geom_point(size = 2) +   
+      labs(
+        title = "Life Expectancy Comparison (1990-2022)",
+        x = "Year",
+        y = "Life Expectancy (Years)"
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+  })
+  
+  output$c3 <- renderPlot({
+    
+    population_data <- comparison_data_clean %>% 
+      filter(Indicator == "SP.POP.TOTL")
+    
+    ggplot(population_data, aes(x = date, y = Value / 10^6, color = country)) +
+      geom_line(size = 1.2) +  
+      geom_point(size = 2) +   
+      labs(
+        title = "Population Total Comparison (1990-2022)",
+        x = "Year",
+        y = "Population (millions)"
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+  })
+}
+
+shinyApp(ui, server)
