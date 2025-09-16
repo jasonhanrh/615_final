@@ -13,8 +13,6 @@
 
 [**https://honb94-ruihang-han.shinyapps.io/Aruba_Ruihang_Han/**](https://honb94-ruihang-han.shinyapps.io/Aruba_Ruihang_Han/)
 
-*(强烈建议您将屏幕录像转换为GIF，并放在此处以获得最佳展示效果)*
-*[INSERT A GIF DEMO OF YOUR SHINY APP HERE]*
 
 ## 🎯 Project Goal & Purpose (The "Problem")
 
